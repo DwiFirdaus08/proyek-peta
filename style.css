@@ -1,0 +1,11 @@
+/* Hapus margin default */
+body {
+    padding: 0;
+    margin: 0;
+}
+
+/* Beri tinggi pada div peta */
+#map { 
+    height: 100vh; /* 100% tinggi viewport */
+    width: 100%;
+}
