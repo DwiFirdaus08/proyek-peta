@@ -11,21 +11,30 @@
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""
     />
+    
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
 
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=2" />
   </head>
   <body>
+    
     <div class="sidebar">
       <div class="sidebar-header">
-        <h2><i class="fa-solid fa-map-location-dot"></i> GeoMaps</h2>
+        <h2>
+            <span><i class="fa-solid fa-map-location-dot"></i> GeoMaps</span>
+            <button class="mobile-close-btn" onclick="toggleSidebar()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </h2>
+
         <div class="search-box">
           <input
             type="text"
@@ -36,13 +45,20 @@
           <i class="fa-solid fa-magnifying-glass"></i>
         </div>
       </div>
-      <div id="locationList" class="location-list"></div>
+
+      <div id="locationList" class="location-list">
+        </div>
+      
       <button class="btn-add" onclick="startAddMode()">
         <i class="fa-solid fa-plus"></i> Tambah Lokasi
       </button>
     </div>
 
     <div id="map"></div>
+
+    <button class="toggle-btn" onclick="toggleSidebar()">
+        <i class="fa-solid fa-bars"></i>
+    </button>
 
     <div id="instruction-box" class="instruction-box">
       <p>
@@ -56,6 +72,7 @@
       <div class="modal-content">
         <span class="close" onclick="closeModal()">&times;</span>
         <h3 id="modalTitle">Tambah Data</h3>
+        
         <form id="dataForm" onsubmit="event.preventDefault(); saveLocation();">
           <input type="hidden" id="locId" />
           <input type="hidden" id="locLat" />
@@ -83,9 +100,8 @@
 
           <div class="info-coord">
             <small>Koordinat: <span id="coordDisplay">-</span></small>
-            <br /><small style="color: red"
-              >*Geser marker biru di peta untuk ubah posisi</small
-            >
+            <br />
+            <small style="color: red">*Geser marker biru di peta untuk ubah posisi</small>
           </div>
 
           <button type="submit" class="btn-save">Simpan</button>
@@ -98,6 +114,7 @@
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
-    <script src="script.js"></script>
+
+    <script src="script.js?v=2"></script>
   </body>
 </html>

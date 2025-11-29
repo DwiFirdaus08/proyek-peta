@@ -1,6 +1,5 @@
 const API_URL = "https://peta-backend.vercel.app/api/locations";
 
-// 1. SETUP BASE LAYERS (Peta Dasar)
 const streetLayer = L.tileLayer(
   "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   {
@@ -16,34 +15,28 @@ const satelliteLayer = L.tileLayer(
   }
 );
 
-// Inisialisasi Map
 var map = L.map("map", {
   center: [-2.5489, 118.0149],
   zoom: 5,
-  layers: [streetLayer], // Default layer
+  layers: [streetLayer],
 });
 
-// Kontrol Layer (Ganti Peta)
 const baseMaps = {
   "Peta Jalan": streetLayer,
   Satelit: satelliteLayer,
 };
 L.control.layers(baseMaps).addTo(map);
 
-// Tombol Lokasi Saya
 L.control.scale().addTo(map);
 
-// Global Variables
 let markers = [];
-let tempMarker = null; // Marker sementara saat tambah data
-let isAddingMode = false; // Status mode tambah
+let tempMarker = null;
+let isAddingMode = false;
 
-// 2. FUNGSI LOAD DATA
 function loadLocations() {
   fetch(API_URL)
     .then((res) => res.json())
     .then((data) => {
-      // Bersihkan marker lama
       markers.forEach((m) => map.removeLayer(m));
       markers = [];
       const listContainer = document.getElementById("locationList");
@@ -57,9 +50,8 @@ function loadLocations() {
     .catch((err) => console.error("Error:", err));
 }
 
-// 3. LOGIC CUSTOM MARKER (Warna-warni sesuai kategori)
 function getIcon(category) {
-  let color = "#3498db"; // Default biru
+  let color = "#3498db";
   let iconClass = "fa-map-marker-alt";
 
   if (category === "wisata") {
@@ -79,7 +71,6 @@ function getIcon(category) {
     iconClass = "fa-graduation-cap";
   } // Hijau
 
-  // Membuat HTML Custom Icon
   const iconHtml = `
         <div class="marker-pin" style="background-color:${color}"></div>
         <i class="fa-solid ${iconClass} marker-icon-fa"></i>
@@ -126,20 +117,24 @@ function addToList(loc) {
     loc.category || "-"
   }</small>`;
 
-  // Fitur: Klik di list, peta langsung zoom ke lokasi
   item.onclick = () => {
     map.flyTo([loc.lat, loc.lng], 16);
+
+    if (window.innerWidth <= 768) {
+      toggleSidebar();
+    }
   };
   listContainer.appendChild(item);
 }
 
-// --- LOGIKA BARU: INTERAKSI KLIK PETA ---
-
-// Fungsi dipanggil saat tombol "Tambah Lokasi" di sidebar diklik
 function startAddMode() {
   isAddingMode = true;
   document.getElementById("instruction-box").style.display = "block"; // Munculkan instruksi
   document.getElementById("map").classList.add("map-add-mode"); // Ubah kursor
+
+  if (window.innerWidth <= 768) {
+    toggleSidebar();
+  }
 }
 
 function cancelAddMode() {
@@ -171,7 +166,6 @@ map.on("click", function (e) {
   }
 });
 
-// 4. MODAL & FORM LOGIC
 const modal = document.getElementById("locationModal");
 
 function openModal(mode, id, name, desc, category) {
@@ -199,8 +193,6 @@ function openModal(mode, id, name, desc, category) {
     document.getElementById("locName").value = name;
     document.getElementById("locDesc").value = desc;
     document.getElementById("locCategory").value = category;
-
-    // Opsional: Bisa ditambahkan logika buat tempMarker di posisi edit
   }
 }
 
@@ -234,8 +226,6 @@ function createTempMarker(lat, lng) {
   document.getElementById("coordDisplay").innerText = `${lat.toFixed(
     5
   )}, ${lng.toFixed(5)}`;
-
-  // map.flyTo([lat, lng], 15); // Opsional: Zoom ke titik
 }
 
 // 5. SIMPAN DATA (CREATE / UPDATE)
@@ -271,7 +261,6 @@ function saveLocation() {
   });
 }
 
-// Global functions untuk diakses dari HTML Popup
 window.editLocation = function (id, name, desc, category) {
   openModal("edit", id, name, desc, category);
 };
@@ -292,5 +281,11 @@ window.filterLocations = function () {
     item.style.display = text.includes(input) ? "block" : "none";
   });
 };
+
+// FUNGSI BARU: Toggle Sidebar (Dipanggil tombol Burger & Close)
+function toggleSidebar() {
+  const sidebar = document.querySelector(".sidebar");
+  sidebar.classList.toggle("active");
+}
 
 loadLocations();

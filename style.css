@@ -7,7 +7,6 @@ body {
   overflow: hidden;
 }
 
-/* Sidebar Styling */
 .sidebar {
   width: 350px;
   background: #fff;
@@ -15,12 +14,26 @@ body {
   z-index: 1000;
   display: flex;
   flex-direction: column;
+  transition: 0.3s ease;
 }
 
 .sidebar-header {
   padding: 20px;
   background: #2c3e50;
   color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  justify-content: space-between;
 }
 
 .search-box {
@@ -63,13 +76,12 @@ body {
   font-weight: bold;
 }
 
-/* Map Styling */
 #map {
   flex: 1;
   height: 100%;
 }
 
-/* Modal Styling */
+/* --- MODAL STYLING --- */
 .modal {
   display: none;
   position: fixed;
@@ -83,10 +95,11 @@ body {
 
 .modal-content {
   background-color: #fefefe;
-  margin: 10% auto;
+  margin: 5% auto;
   padding: 20px;
   border: 1px solid #888;
   width: 300px;
+  max-width: 90%; /* Supaya aman di HP */
   border-radius: 10px;
 }
 
@@ -105,6 +118,7 @@ body {
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
+  box-sizing: border-box; /* Agar padding tidak merusak lebar */
 }
 
 .btn-save {
@@ -117,7 +131,7 @@ body {
   cursor: pointer;
 }
 
-/* Custom Marker Icons */
+/* --- CUSTOM MARKER ICONS --- */
 .custom-div-icon {
   background: transparent;
   border: none;
@@ -152,7 +166,7 @@ body {
 }
 
 .instruction-box {
-  display: none; 
+  display: none;
   position: absolute;
   top: 20px;
   left: 50%;
@@ -162,9 +176,10 @@ body {
   padding: 15px 25px;
   border-radius: 30px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  z-index: 3000; /* Di atas segalanya */
+  z-index: 3000;
   text-align: center;
   font-weight: bold;
+  white-space: nowrap;
 }
 
 .instruction-box button {
@@ -177,13 +192,71 @@ body {
   cursor: pointer;
 }
 
-/* Ubah kursor saat mode tambah */
 .map-add-mode {
   cursor: crosshair !important;
 }
 
-/* Pastikan Modal tidak menutupi seluruh layar  */
-.modal-content {
-  margin: 5% auto;
-  max-width: 400px; /* Batasi lebar */
+.toggle-btn {
+  display: none;
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 1500;
+  background: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  font-size: 18px;
+  color: #2c3e50;
+}
+
+.mobile-close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+@media screen and (max-width: 768px) {
+  body {
+    display: block;
+    position: relative;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 80%;
+    height: 100vh;
+    z-index: 2000;
+  }
+
+  .sidebar.active {
+    left: 0;
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
+  }
+
+  .toggle-btn {
+    display: block;
+  }
+  .mobile-close-btn {
+    display: block;
+  }
+
+  .instruction-box {
+    font-size: 12px;
+    top: 70px;
+    width: 80%;
+    white-space: normal;
+  }
+
+  .modal-content {
+    width: 85%;
+    margin: 20% auto;
+  }
 }
