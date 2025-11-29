@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000/api/locations";
+const API_URL = "https://peta-backend.vercel.app/api/locations";
 
 // 1. SETUP BASE LAYERS (Peta Dasar)
 const streetLayer = L.tileLayer(
