@@ -1,26 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peta Interaktif</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-     crossorigin=""/>
-    
-    <link rel="stylesheet" href="style.css">
-    
-</head>
-<body>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Peta Digital Profesional</title>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2><i class="fa-solid fa-map-location-dot"></i> GeoMaps</h2>
+        <div class="search-box">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Cari lokasi..."
+            onkeyup="filterLocations()"
+          />
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+      </div>
+      <div id="locationList" class="location-list"></div>
+      <button class="btn-add" onclick="openModal('add')">
+        <i class="fa-solid fa-plus"></i> Tambah Lokasi
+      </button>
+    </div>
 
     <div id="map"></div>
 
+    <div id="locationModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3 id="modalTitle">Tambah Data</h3>
+        <form id="dataForm" onsubmit="event.preventDefault(); saveLocation();">
+          <input type="hidden" id="locId" />
+          <input type="hidden" id="locLat" />
+          <input type="hidden" id="locLng" />
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-     crossorigin=""></script>
+          <div class="form-group">
+            <label>Nama Lokasi</label>
+            <input type="text" id="locName" required />
+          </div>
 
+          <div class="form-group">
+            <label>Kategori</label>
+            <select id="locCategory">
+              <option value="wisata">Wisata</option>
+              <option value="kuliner">Kuliner</option>
+              <option value="kantor">Perkantoran</option>
+              <option value="pendidikan">Pendidikan</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Deskripsi</label>
+            <textarea id="locDesc" rows="3"></textarea>
+          </div>
+
+          <div class="info-coord">
+            <small>Koordinat: <span id="coordDisplay">-</span></small>
+            <br /><small style="color: red"
+              >*Geser marker biru di peta untuk ubah posisi</small
+            >
+          </div>
+
+          <button type="submit" class="btn-save">Simpan</button>
+        </form>
+      </div>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
     <script src="script.js"></script>
-</body>
+  </body>
 </html>

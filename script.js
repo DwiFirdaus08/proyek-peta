@@ -1,106 +1,250 @@
 const API_URL = "http://localhost:3000/api/locations";
 
-// Inisialisasi Peta
-var map = L.map("map").setView([-2.5489, 118.0149], 5); // Tengah Indonesia
+// 1. SETUP BASE LAYERS (Peta Dasar)
+const streetLayer = L.tileLayer(
+  "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap",
+  }
+);
 
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: "&copy; OpenStreetMap",
-}).addTo(map);
+const satelliteLayer = L.tileLayer(
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  {
+    attribution: "Tiles &copy; Esri",
+  }
+);
 
-// --- 1. READ: Load Data ---
+// Inisialisasi Map
+var map = L.map("map", {
+  center: [-2.5489, 118.0149],
+  zoom: 5,
+  layers: [streetLayer], // Default layer
+});
+
+// Kontrol Layer (Ganti Peta)
+const baseMaps = {
+  "Peta Jalan": streetLayer,
+  Satelit: satelliteLayer,
+};
+L.control.layers(baseMaps).addTo(map);
+
+// Tombol Lokasi Saya
+L.control.scale().addTo(map);
+
+// Global Variables
+let markers = [];
+let tempMarker = null; // Marker sementara saat tambah data
+
+// 2. FUNGSI LOAD DATA
 function loadLocations() {
-  // Hapus marker lama agar tidak duplikat saat refresh
-  map.eachLayer((layer) => {
-    if (layer instanceof L.Marker) {
-      map.removeLayer(layer);
-    }
-  });
-
   fetch(API_URL)
     .then((res) => res.json())
     .then((data) => {
-      data.forEach((loc) => addMarkerToMap(loc));
+      // Bersihkan marker lama
+      markers.forEach((m) => map.removeLayer(m));
+      markers = [];
+      const listContainer = document.getElementById("locationList");
+      listContainer.innerHTML = "";
+
+      data.forEach((loc) => {
+        addMarkerToMap(loc);
+        addToList(loc);
+      });
     })
-    .catch((err) => console.error("Error backend:", err));
+    .catch((err) => console.error("Error:", err));
+}
+
+// 3. LOGIC CUSTOM MARKER (Warna-warni sesuai kategori)
+function getIcon(category) {
+  let color = "#3498db"; // Default biru
+  let iconClass = "fa-map-marker-alt";
+
+  if (category === "wisata") {
+    color = "#e74c3c";
+    iconClass = "fa-umbrella-beach";
+  } // Merah
+  else if (category === "kuliner") {
+    color = "#f39c12";
+    iconClass = "fa-utensils";
+  } // Orange
+  else if (category === "kantor") {
+    color = "#8e44ad";
+    iconClass = "fa-building";
+  } // Ungu
+  else if (category === "pendidikan") {
+    color = "#27ae60";
+    iconClass = "fa-graduation-cap";
+  } // Hijau
+
+  // Membuat HTML Custom Icon
+  const iconHtml = `
+        <div class="marker-pin" style="background-color:${color}"></div>
+        <i class="fa-solid ${iconClass} marker-icon-fa"></i>
+    `;
+
+  return L.divIcon({
+    className: "custom-div-icon",
+    html: iconHtml,
+    iconSize: [30, 42],
+    iconAnchor: [15, 42],
+  });
 }
 
 function addMarkerToMap(loc) {
-  var marker = L.marker([loc.lat, loc.lng]).addTo(map);
+  var marker = L.marker([loc.lat, loc.lng], {
+    icon: getIcon(loc.category),
+  }).addTo(map);
 
-  // Popup dengan tombol Edit & Hapus
-  var popupContent = `
-        <b>${loc.name}</b><br>
-        ${loc.desc}<br><br>
-        <div style="display:flex; gap:5px;">
-            <button onclick="editLocation('${loc.id}', '${loc.name}', '${loc.desc}')" style="cursor:pointer;">Edit</button>
-            <button onclick="deleteLocation('${loc.id}')" style="cursor:pointer; color:red;">Hapus</button>
+  const popupContent = `
+        <div style="text-align:center">
+            <h3>${loc.name}</h3>
+            <span style="background:#eee; padding:2px 5px; border-radius:3px; font-size:10px;">${
+              loc.category || "Umum"
+            }</span>
+            <p>${loc.desc}</p>
+            <button onclick="editLocation('${loc.id}', '${loc.name}', '${
+    loc.desc
+  }', '${loc.category}')" class="btn-edit-popup">Edit</button>
+            <button onclick="deleteLocation('${
+              loc.id
+            }')" class="btn-del-popup">Hapus</button>
         </div>
     `;
 
   marker.bindPopup(popupContent);
+  markers.push(marker);
 }
 
-// --- 2. CREATE: Tambah Data (Klik Peta) ---
-map.on("click", function (e) {
-  var name = prompt("Nama Lokasi Baru:");
-  if (!name) return; // Batal jika kosong
-  var desc = prompt("Deskripsi:");
+function addToList(loc) {
+  const listContainer = document.getElementById("locationList");
+  const item = document.createElement("div");
+  item.className = "location-item";
+  item.innerHTML = `<b>${loc.name}</b><br><small>${
+    loc.category || "-"
+  }</small>`;
 
-  var newLoc = {
-    name: name,
-    lat: e.latlng.lat,
-    lng: e.latlng.lng,
-    desc: desc || "-",
+  // Fitur: Klik di list, peta langsung zoom ke lokasi
+  item.onclick = () => {
+    map.flyTo([loc.lat, loc.lng], 16);
   };
+  listContainer.appendChild(item);
+}
 
-  fetch(API_URL, {
-    method: "POST",
+// 4. MODAL & FORM LOGIC
+const modal = document.getElementById("locationModal");
+
+function openModal(mode, id, name, desc, category) {
+  modal.style.display = "block";
+
+  if (mode === "add") {
+    document.getElementById("modalTitle").innerText = "Tambah Lokasi Baru";
+    document.getElementById("dataForm").reset();
+    document.getElementById("locId").value = "";
+
+    // Buat marker draggable di tengah peta untuk nentuin posisi
+    const center = map.getCenter();
+    createTempMarker(center.lat, center.lng);
+  } else {
+    document.getElementById("modalTitle").innerText = "Edit Lokasi";
+    document.getElementById("locId").value = id;
+    document.getElementById("locName").value = name;
+    document.getElementById("locDesc").value = desc;
+    document.getElementById("locCategory").value = category;
+
+    // Cari koordinat marker yang mau diedit (logic sederhana)
+    // Di aplikasi real, lat/lng dilempar via parameter fungsi editLocation
+  }
+}
+
+function closeModal() {
+  modal.style.display = "none";
+  if (tempMarker) {
+    map.removeLayer(tempMarker);
+    tempMarker = null;
+  }
+}
+
+// Marker Draggable untuk input lokasi
+function createTempMarker(lat, lng) {
+  if (tempMarker) map.removeLayer(tempMarker);
+
+  tempMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+
+  // Update text koordinat saat digeser
+  tempMarker.on("dragend", function (e) {
+    const coord = e.target.getLatLng();
+    document.getElementById("locLat").value = coord.lat;
+    document.getElementById("locLng").value = coord.lng;
+    document.getElementById("coordDisplay").innerText = `${coord.lat.toFixed(
+      5
+    )}, ${coord.lng.toFixed(5)}`;
+  });
+
+  // Set nilai awal
+  document.getElementById("locLat").value = lat;
+  document.getElementById("locLng").value = lng;
+  document.getElementById("coordDisplay").innerText = `${lat.toFixed(
+    5
+  )}, ${lng.toFixed(5)}`;
+
+  map.flyTo([lat, lng], 15);
+}
+
+// 5. SIMPAN DATA (CREATE / UPDATE)
+function saveLocation() {
+  const id = document.getElementById("locId").value;
+  const name = document.getElementById("locName").value;
+  const category = document.getElementById("locCategory").value;
+  const desc = document.getElementById("locDesc").value;
+  const lat = parseFloat(document.getElementById("locLat").value);
+  const lng = parseFloat(document.getElementById("locLng").value);
+
+  const payload = { name, category, desc, lat, lng };
+
+  let url = API_URL;
+  let method = "POST";
+
+  if (id) {
+    // Jika ada ID, berarti mode EDIT
+    url = `${API_URL}/${id}`;
+    method = "PUT";
+  }
+
+  fetch(url, {
+    method: method,
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(newLoc),
-  })
-    .then((res) => res.json())
-    .then((savedLoc) => {
-      addMarkerToMap(savedLoc);
-      alert("Lokasi tersimpan!");
-    })
-    .catch((err) => alert("Gagal simpan: " + err));
-});
-
-// --- 3. UPDATE: Edit Data ---
-window.editLocation = function (id, oldName, oldDesc) {
-  var newName = prompt("Edit Nama:", oldName);
-  if (newName === null) return;
-  var newDesc = prompt("Edit Deskripsi:", oldDesc);
-
-  var updateData = { name: newName, desc: newDesc };
-
-  fetch(`${API_URL}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updateData),
+    body: JSON.stringify(payload),
   }).then((res) => {
     if (res.ok) {
-      loadLocations(); // Refresh peta
-      alert("Data berhasil diupdate!");
-    } else {
-      alert("Gagal update.");
+      closeModal();
+      loadLocations();
+      alert("Data berhasil disimpan!");
     }
   });
+}
+
+// Global functions untuk diakses dari HTML Popup
+window.editLocation = function (id, name, desc, category) {
+  openModal("edit", id, name, desc, category);
 };
 
-// --- 4. DELETE: Hapus Data ---
 window.deleteLocation = function (id) {
-  if (!confirm("Yakin hapus?")) return;
+  if (confirm("Hapus data ini?")) {
+    fetch(`${API_URL}/${id}`, { method: "DELETE" }).then(() => loadLocations());
+  }
+};
 
-  fetch(`${API_URL}/${id}`, { method: "DELETE" }).then((res) => {
-    if (res.ok) {
-      loadLocations(); // Refresh peta
-    } else {
-      alert("Gagal hapus.");
-    }
+// Filter Pencarian
+window.filterLocations = function () {
+  const input = document.getElementById("searchInput").value.toLowerCase();
+  const items = document.getElementsByClassName("location-item");
+
+  Array.from(items).forEach((item) => {
+    const text = item.innerText.toLowerCase();
+    item.style.display = text.includes(input) ? "block" : "none";
   });
 };
 
-// Panggil saat awal
 loadLocations();
