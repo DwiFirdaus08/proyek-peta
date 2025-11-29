@@ -36,6 +36,7 @@ L.control.scale().addTo(map);
 // Global Variables
 let markers = [];
 let tempMarker = null; // Marker sementara saat tambah data
+let isAddingMode = false; // Status mode tambah
 
 // 2. FUNGSI LOAD DATA
 function loadLocations() {
@@ -132,6 +133,44 @@ function addToList(loc) {
   listContainer.appendChild(item);
 }
 
+// --- LOGIKA BARU: INTERAKSI KLIK PETA ---
+
+// Fungsi dipanggil saat tombol "Tambah Lokasi" di sidebar diklik
+function startAddMode() {
+  isAddingMode = true;
+  document.getElementById("instruction-box").style.display = "block"; // Munculkan instruksi
+  document.getElementById("map").classList.add("map-add-mode"); // Ubah kursor
+}
+
+function cancelAddMode() {
+  isAddingMode = false;
+  document.getElementById("instruction-box").style.display = "none";
+  document.getElementById("map").classList.remove("map-add-mode");
+  if (tempMarker) {
+    map.removeLayer(tempMarker);
+    tempMarker = null;
+  }
+}
+
+// Event Listener: Klik Peta
+map.on("click", function (e) {
+  if (isAddingMode) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+
+    // 1. Buat marker di titik klik
+    createTempMarker(lat, lng);
+
+    // 2. Buka form modal
+    openModal("add");
+
+    // 3. Matikan mode tambah
+    document.getElementById("instruction-box").style.display = "none";
+    document.getElementById("map").classList.remove("map-add-mode");
+    isAddingMode = false;
+  }
+});
+
 // 4. MODAL & FORM LOGIC
 const modal = document.getElementById("locationModal");
 
@@ -139,22 +178,29 @@ function openModal(mode, id, name, desc, category) {
   modal.style.display = "block";
 
   if (mode === "add") {
-    document.getElementById("modalTitle").innerText = "Tambah Lokasi Baru";
+    document.getElementById("modalTitle").innerText = "Simpan Lokasi Ini?";
     document.getElementById("dataForm").reset();
     document.getElementById("locId").value = "";
 
-    // Buat marker draggable di tengah peta untuk nentuin posisi
-    const center = map.getCenter();
-    createTempMarker(center.lat, center.lng);
+    // Kita TIDAK lagi membuat marker di tengah otomatis (karena sudah dibuat lewat klik)
+    // Tapi kita pastikan input form terisi koordinat dari tempMarker
+    if (tempMarker) {
+      const coord = tempMarker.getLatLng();
+      document.getElementById("locLat").value = coord.lat;
+      document.getElementById("locLng").value = coord.lng;
+      document.getElementById("coordDisplay").innerText = `${coord.lat.toFixed(
+        5
+      )}, ${coord.lng.toFixed(5)}`;
+    }
   } else {
+    // Mode EDIT
     document.getElementById("modalTitle").innerText = "Edit Lokasi";
     document.getElementById("locId").value = id;
     document.getElementById("locName").value = name;
     document.getElementById("locDesc").value = desc;
     document.getElementById("locCategory").value = category;
 
-    // Cari koordinat marker yang mau diedit (logic sederhana)
-    // Di aplikasi real, lat/lng dilempar via parameter fungsi editLocation
+    // Opsional: Bisa ditambahkan logika buat tempMarker di posisi edit
   }
 }
 
@@ -182,14 +228,14 @@ function createTempMarker(lat, lng) {
     )}, ${coord.lng.toFixed(5)}`;
   });
 
-  // Set nilai awal
+  // Set nilai awal ke form
   document.getElementById("locLat").value = lat;
   document.getElementById("locLng").value = lng;
   document.getElementById("coordDisplay").innerText = `${lat.toFixed(
     5
   )}, ${lng.toFixed(5)}`;
 
-  map.flyTo([lat, lng], 15);
+  // map.flyTo([lat, lng], 15); // Opsional: Zoom ke titik
 }
 
 // 5. SIMPAN DATA (CREATE / UPDATE)
